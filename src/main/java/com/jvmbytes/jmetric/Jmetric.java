@@ -3,6 +3,7 @@ package com.jvmbytes.jmetric;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryUsage;
 import java.lang.management.OperatingSystemMXBean;
+import java.lang.management.RuntimeMXBean;
 import java.lang.management.ThreadMXBean;
 import java.lang.reflect.Method;
 
@@ -16,6 +17,7 @@ public class Jmetric {
 
     private final static OperatingSystemMXBean OPERATING_SYSTEM_BEAN = ManagementFactory.getOperatingSystemMXBean();
     private final static ThreadMXBean THREAD_BEAN = ManagementFactory.getThreadMXBean();
+    private final static RuntimeMXBean RUNTIME_BEAN = ManagementFactory.getRuntimeMXBean();
 
     private static Method detectMethod(String name) {
         try {
@@ -58,6 +60,18 @@ public class Jmetric {
     private static double invokeDouble(Method method) {
         Object value = invoke(method);
         return value == null ? 0L : (double) value;
+    }
+
+    public static String getJavaVersion() {
+        return System.getProperty("java.version");
+    }
+
+    public static String getJvmName() {
+        return RUNTIME_BEAN.getVmName();
+    }
+
+    public static String getJvmVersion() {
+        return RUNTIME_BEAN.getVmVersion();
     }
 
     public static String getOsName() {
@@ -134,6 +148,8 @@ public class Jmetric {
     }
 
     private static void printMetrics() {
+        System.out.printf("%32s: %s\n", "Java Version", getJavaVersion());
+        System.out.printf("%32s: %s (%s)\n", "JVM Version", getJvmName(), getJvmVersion());
         System.out.printf("%32s: %s\n", "OS Name", getOsName());
         System.out.printf("%32s: %s\n", "OS Version", getOsVersion());
         System.out.printf("%32s: %s\n", "Arch", getArch());

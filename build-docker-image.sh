@@ -1,5 +1,7 @@
 #!/usr/bin/env sh
 
+[ "$1" = "push" ] && withPush=true || withPush=false
+
 mvn clean package
 
 function build_docker_image() {
@@ -15,7 +17,8 @@ function build_docker_image() {
 
     docker build -t jmetric:$ver -f target/Dockerfile .
     docker tag jmetric:$ver jvmbytes/jmetric:$ver
-    docker push jvmbytes/jmetric:$ver
+
+    if [ $withPush == true ]; then docker push jvmbytes/jmetric:$ver; fi
 }
 
 build_docker_image 8-jre
