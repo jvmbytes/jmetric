@@ -164,8 +164,12 @@ public class Jmetric {
         return ((double) size) / (1024 * 1024);
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         printMetrics();
+        if (args.length > 0) {
+            long sleep = Long.parseLong(args[0]);
+            Thread.sleep(sleep);
+        }
     }
 
 }
