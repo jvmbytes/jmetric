@@ -15,16 +15,33 @@ public class Jmetric {
     private Jmetric() {
     }
 
+    private final static String SUN_OPERATING_SYSTEM_BEAN_IMPL = "com.sun.management.internal.OperatingSystemImpl";
+    private final static String SUN_OPERATING_SYSTEM_BEAN_INTERFACE = "com.sun.management.OperatingSystemMXBean";
+
     private final static OperatingSystemMXBean OPERATING_SYSTEM_BEAN = ManagementFactory.getOperatingSystemMXBean();
+    private static final Class<?> OPERATING_SYSTEM_CLASS;
     private final static ThreadMXBean THREAD_BEAN = ManagementFactory.getThreadMXBean();
     private final static RuntimeMXBean RUNTIME_BEAN = ManagementFactory.getRuntimeMXBean();
 
+    static {
+        try {
+            if (SUN_OPERATING_SYSTEM_BEAN_IMPL.equals(OPERATING_SYSTEM_BEAN.getClass().getName())) {
+                OPERATING_SYSTEM_CLASS = Class.forName(SUN_OPERATING_SYSTEM_BEAN_INTERFACE);
+            } else {
+                OPERATING_SYSTEM_CLASS = OPERATING_SYSTEM_BEAN.getClass();
+            }
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private static Method detectMethod(String name) {
         try {
-            Method method = OPERATING_SYSTEM_BEAN.getClass().getDeclaredMethod(name);
+            Method method = OPERATING_SYSTEM_CLASS.getDeclaredMethod(name);
             method.setAccessible(true);
             return method;
         } catch (NoSuchMethodException e) {
+            System.out.printf("method not found: %s.%s\n", OPERATING_SYSTEM_CLASS.getName(), name);
             return null;
         }
     }
@@ -38,7 +55,6 @@ public class Jmetric {
     private final static Method FREE_PHYSICAL_MEMORY_SIZE_METHOD = detectMethod("getFreePhysicalMemorySize");
     private final static Method TOTAL_PHYSICAL_MEMORY_SIZE_METHOD = detectMethod("getTotalPhysicalMemorySize");
 
-
     private static Object invoke(Method method) {
         try {
             return method != null ? method.invoke(OPERATING_SYSTEM_BEAN) : null;
@@ -49,17 +65,17 @@ public class Jmetric {
 
     private static String invokeString(Method method) {
         Object value = invoke(method);
-        return value == null ? "" : (String) value;
+        return value == null ? "" : (String)value;
     }
 
     private static long invokeLong(Method method) {
         Object value = invoke(method);
-        return value == null ? 0L : (long) value;
+        return value == null ? 0L : (long)value;
     }
 
     private static double invokeDouble(Method method) {
         Object value = invoke(method);
-        return value == null ? 0L : (double) value;
+        return value == null ? 0L : (double)value;
     }
 
     public static String getJavaVersion() {
@@ -130,7 +146,6 @@ public class Jmetric {
         return ManagementFactory.getMemoryMXBean().getHeapMemoryUsage();
     }
 
-
     public static long getTotalStartedThreadCount() {
         return THREAD_BEAN.getTotalStartedThreadCount();
     }
@@ -162,7 +177,8 @@ public class Jmetric {
         System.out.printf("%32s: %.2f MB\n", "Free Physical Memory Size", megabytes(getFreePhysicalMemorySize()));
         System.out.printf("%32s: %.2f MB\n", "Total Swap Space Size", megabytes(getTotalSwapSpaceSize()));
         System.out.printf("%32s: %.2f MB\n", "Free Swap Space Size", megabytes(getFreeSwapSpaceSize()));
-        System.out.printf("%32s: %.2f MB\n", "Committed Virtual Memory Size", megabytes(getCommittedVirtualMemorySize()));
+        System.out
+            .printf("%32s: %.2f MB\n", "Committed Virtual Memory Size", megabytes(getCommittedVirtualMemorySize()));
 
         MemoryUsage memoryUsage = getHeapMemoryUsage();
         System.out.printf("%32s: %.2f MB\n", "Heap Size Init", megabytes(memoryUsage.getInit()));
@@ -177,7 +193,7 @@ public class Jmetric {
     }
 
     private static double megabytes(long size) {
-        return ((double) size) / (1024 * 1024);
+        return ((double)size) / (1024 * 1024);
     }
 
     public static void main(String[] args) throws Exception {
